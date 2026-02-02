@@ -1,5 +1,7 @@
 <div class="map-container">
-  <div class="map-frame">
-    <div id="map"></div>
+  <div class="search-box">
+    <input id="input" type="text" placeholder="Zoek locatie" [(ngModel)]="searchQuery" />
+    <button class="button-17 small" role="button" (click)="onSearch()">Zoek</button>
   </div>
+  <div id="map"></div>
 </div>
