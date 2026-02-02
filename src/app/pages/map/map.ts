@@ -46,8 +46,13 @@ export class MapComponent implements AfterViewInit {
     console.log('API URL:', url);
 
     this.http.get(url).subscribe({
-      next: (Response) => {
+      next: (Response: any) => {
         console.log('API Response:', Response);
+        const location = Response[0];
+        const lat = location.lat;
+        const lon = location.lon;
+        console.log(lat, lon); // 51.8296133 4.9738743
+        this.map.setView([lat, lon], 13);
       },
       error: (error) => {
         console.error('error', error);
