@@ -3,5 +3,10 @@
     <input id="input" type="text" placeholder="Zoek locatie" [(ngModel)]="searchQuery" />
     <button class="button-17 small" role="button" (click)="onSearch()">Zoek</button>
   </div>
+  <div class="poi-mode">
+    <button class="button-17 small" role="button" (click)="toggleAddPoiMode()">
+      Toggle POI Mode
+    </button>
+  </div>
   <div id="map"></div>
 </div>
