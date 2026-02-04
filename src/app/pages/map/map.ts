@@ -1,9 +1,8 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, input, OnInit } from '@angular/core';
 import * as L from 'leaflet';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { PoiService } from '../../service/poi.service';
-import { map } from 'rxjs/internal/operators/map';
 
 @Component({
   selector: 'app-map',
@@ -13,7 +12,7 @@ import { map } from 'rxjs/internal/operators/map';
 })
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;
-  private poiLayer = L.layerGroup(); //new
+  private poiLayer = L.layerGroup();
   searchQuery: string = '';
   isAddingPoi: boolean = false;
 
@@ -32,17 +31,14 @@ export class MapComponent implements AfterViewInit {
     });
 
     tiles.addTo(this.map);
-    this.poiLayer = L.layerGroup().addTo(this.map); //new
+    this.poiLayer = L.layerGroup().addTo(this.map);
 
     //register click
     this.map.on('click', (e) => {
       if (this.isAddingPoi == true) {
         const latPoi = e.latlng.lat;
         const lonPoi = e.latlng.lng;
-        console.log(latPoi, lonPoi);
-        const newPoi = this.poiService.addPoi(latPoi, lonPoi);
-        console.log('New POI added:', newPoi);
-        this.renderAllPois();
+        this.showPoiPopup(latPoi, lonPoi);
       }
     });
   }
@@ -92,9 +88,45 @@ export class MapComponent implements AfterViewInit {
 
     const allPois = this.poiService.getPois();
     allPois.forEach((poi) => {
-      const marker = L.circle([poi.latPoi, poi.lonPoi], { color: 'red', radius: 3 }).addTo(
-        this.poiLayer,
-      );
+      const marker = L.circle([poi.latPoi, poi.lonPoi], {
+        color: poi.color || '#ff0000',
+        radius: poi.radius || 3,
+      }).addTo(this.poiLayer);
     });
+  }
+  //refactor register click function here.
+  private savePoiFromPopup(
+    latPoi: number,
+    lonPoi: number,
+    name: string,
+    color?: string,
+    radius?: number,
+  ): void {
+    const newPoi = this.poiService.addPoi(latPoi, lonPoi, name, color, radius);
+    console.log('New POI added:', newPoi);
+    this.renderAllPois();
+  }
+
+  private showPoiPopup(latPoi: number, lonPoi: number): void {
+    const template = document.getElementById('poi-form-template');
+    const popupcontent = template?.innerHTML || '';
+    const popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupcontent).openOn(this.map);
+    setTimeout(() => {
+      const saveBTN = document.getElementById('savepoi');
+      const poiName = document.getElementById('poiname') as HTMLInputElement;
+      const colorInput = document.getElementById('poicolor') as HTMLInputElement;
+      const radiusInput = document.getElementById('poiradius') as HTMLInputElement;
+
+      if (saveBTN && poiName) {
+        saveBTN.addEventListener('click', () => {
+          const name = poiName.value;
+          const color = colorInput.value;
+          const radius = parseInt(radiusInput.value);
+          this.savePoiFromPopup(latPoi, lonPoi, name, color, radius);
+          this.map.closePopup(popup);
+          this.renderAllPois();
+        });
+      }
+    }, 100);
   }
 }
