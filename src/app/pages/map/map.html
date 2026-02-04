@@ -11,7 +11,7 @@
   <div id="map"></div>
 </div>
 
-<div id="poi-form-template" style="display: none">
+<!--<div id="poi-form-template" style="display: none">
   <div class="poi-popup-form">
     <label for="poiname">Naam:</label>
     <input type="text" id="poiname" placeholder="Bijv. Restaurant" />
@@ -23,5 +23,23 @@
     <input type="number" id="poiradius" value="10" min="1" max="500" />
 
     <button id="savepoi">Opslaan</button>
+    <button class="remove" id="deletepoi">Verwijderen</button>
   </div>
+</div>  -->
+
+<div id="poi-form-template" style="display: none">
+  <form class="poi-popup-form" [formGroup]="poiForm">
+    <label for="poiname">Naam:</label>
+    <input type="text" id="poiname" formControlName="name" />
+
+    <label for="poicolor">Kleur:</label>
+    <input type="color" id="poicolor" formControlName="color" />
+
+    <label for="poiradius">Radius (meters):</label>
+    <input type="number" id="poiradius" formControlName="radius" min="1" max="500" />
+
+    <button type="button" id="savepoi">Opslaan</button>
+
+    <button type="button" class="remove" id="deletepoi">Verwijderen</button>
+  </form>
 </div>

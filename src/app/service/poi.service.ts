@@ -28,7 +28,20 @@ export class PoiService {
     this.pois.push(newPoi);
     return newPoi;
   }
+
   getPois(): Poi[] {
     return this.pois;
   }
+  /*
+  deletePoi(id: string): boolean {
+    //zoek poi met id
+    //verwijder uit array
+    //return bool
+  }
+
+  updatePoi(id: string, updates: Partial<Poi>): Poi | null {
+    //zoek poi met id
+    //update properties
+    //return updated poi of null
+  }  */
 }

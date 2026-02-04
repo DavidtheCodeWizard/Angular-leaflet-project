@@ -3,16 +3,19 @@ import * as L from 'leaflet';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { PoiService } from '../../service/poi.service';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-map',
-  imports: [FormsModule],
+  standalone: true, //check if this is right?
+  imports: [FormsModule, ReactiveFormsModule],
   templateUrl: './map.html',
   styleUrl: './map.scss',
 })
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;
   private poiLayer = L.layerGroup();
+  poiForm!: FormGroup; //check why this is needed
   searchQuery: string = '';
   isAddingPoi: boolean = false;
 
@@ -43,10 +46,23 @@ export class MapComponent implements AfterViewInit {
     });
   }
 
+  /*poiForm = this.fb.group({
+    name: [''],
+    color: ['#ff0000'],
+    radius: [10],
+  });  */
+
   constructor(
     private http: HttpClient,
     public poiService: PoiService,
-  ) {}
+    private fb: FormBuilder,
+  ) {
+    this.poiForm = this.fb.group({
+      name: [''],
+      color: ['#ff0000'],
+      radius: [10],
+    });
+  }
 
   ngAfterViewInit(): void {
     this.initMap();
@@ -92,9 +108,16 @@ export class MapComponent implements AfterViewInit {
         color: poi.color || '#ff0000',
         radius: poi.radius || 3,
       }).addTo(this.poiLayer);
+      //click event
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        console.log('POI clicked:', poi);
+        //open edit popup.
+        this.showEditPoiPopup(poi);
+      });
     });
   }
-  //refactor register click function here.
+  //save POI from popup
   private savePoiFromPopup(
     latPoi: number,
     lonPoi: number,
@@ -107,26 +130,49 @@ export class MapComponent implements AfterViewInit {
     this.renderAllPois();
   }
 
+  //show POI popup -> refactor openNewPoiPopup
   private showPoiPopup(latPoi: number, lonPoi: number): void {
+    this.poiForm.reset({
+      name: '',
+      color: '#ff0000',
+      radius: 10,
+    });
+
     const template = document.getElementById('poi-form-template');
     const popupcontent = template?.innerHTML || '';
+
     const popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupcontent).openOn(this.map);
+
     setTimeout(() => {
       const saveBTN = document.getElementById('savepoi');
-      const poiName = document.getElementById('poiname') as HTMLInputElement;
-      const colorInput = document.getElementById('poicolor') as HTMLInputElement;
-      const radiusInput = document.getElementById('poiradius') as HTMLInputElement;
 
-      if (saveBTN && poiName) {
-        saveBTN.addEventListener('click', () => {
-          const name = poiName.value;
-          const color = colorInput.value;
-          const radius = parseInt(radiusInput.value);
+      if (saveBTN) {
+        saveBTN.onclick = () => {
+          const { name, color, radius } = this.poiForm.value;
+
           this.savePoiFromPopup(latPoi, lonPoi, name, color, radius);
+
           this.map.closePopup(popup);
           this.renderAllPois();
-        });
+        };
       }
-    }, 100);
+    }, 0);
   }
+
+  //edit POI popup
+  private showEditPoiPopup(poi: any): void {
+    //get html content and set values
+    //show popup
+    //timeout
+    //save button with all fields
+    //delete old record?
+    //add new record? is update posible?
+    //close popup
+    //rendeAllPois
+  }
+
+  /*private getHTMLContent(poi: any) : string {
+   //const template = document.getElementById('poi-form-template');
+  // return = const popupcontent = template?.innerHTML || '';
+  }  */
 }
