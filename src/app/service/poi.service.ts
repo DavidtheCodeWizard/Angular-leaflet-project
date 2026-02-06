@@ -30,6 +30,7 @@ export class PoiService {
   }
 
   getPois(): Poi[] {
+    console.log(this.pois);
     return this.pois;
   }
   /*

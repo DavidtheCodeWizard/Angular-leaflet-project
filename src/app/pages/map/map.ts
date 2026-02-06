@@ -4,20 +4,27 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { PoiService } from '../../service/poi.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ViewChild, ElementRef } from '@angular/core'; //new
+import { NgTemplateOutlet } from '@angular/common'; //new
 
 @Component({
   selector: 'app-map',
   standalone: true, //check if this is right?
-  imports: [FormsModule, ReactiveFormsModule],
+  imports: [FormsModule, ReactiveFormsModule, NgTemplateOutlet],
   templateUrl: './map.html',
   styleUrl: './map.scss',
 })
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;
   private poiLayer = L.layerGroup();
-  poiForm!: FormGroup; //check why this is needed
+  poiForm!: FormGroup;
+  @ViewChild('poiFormContainer', { read: ElementRef }) //check these 2 lines
+  poiFormContainer!: ElementRef<HTMLElement>;
   searchQuery: string = '';
   isAddingPoi: boolean = false;
+  currentLat!: number;
+  currentLon!: number;
+  private popup!: L.Popup; //popup property
 
   //map init
   private initMap(): void {
@@ -46,24 +53,19 @@ export class MapComponent implements AfterViewInit {
     });
   }
 
-  /*poiForm = this.fb.group({
-    name: [''],
-    color: ['#ff0000'],
-    radius: [10],
-  });  */
-
   constructor(
     private http: HttpClient,
     public poiService: PoiService,
     private fb: FormBuilder,
-  ) {
+  ) {}
+
+  ngOnInit(): void {
     this.poiForm = this.fb.group({
       name: [''],
       color: ['#ff0000'],
       radius: [10],
     });
   }
-
   ngAfterViewInit(): void {
     this.initMap();
   }
@@ -132,31 +134,36 @@ export class MapComponent implements AfterViewInit {
 
   //show POI popup -> refactor openNewPoiPopup
   private showPoiPopup(latPoi: number, lonPoi: number): void {
+    this.currentLat = latPoi;
+    this.currentLon = lonPoi;
     this.poiForm.reset({
       name: '',
       color: '#ff0000',
       radius: 10,
     });
 
-    const template = document.getElementById('poi-form-template');
-    const popupcontent = template?.innerHTML || '';
+    const popupContent = this.poiFormContainer.nativeElement; //new
+    console.log(popupContent);
+    if (popupContent.parentElement) {
+      popupContent.parentElement.removeChild(popupContent);
+    }
+    this.popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupContent).openOn(this.map);
+    //const popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupContent).openOn(this.map);
+  }
 
-    const popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupcontent).openOn(this.map);
+  public savePoi(): void {
+    if (this.poiForm.invalid) return;
 
-    setTimeout(() => {
-      const saveBTN = document.getElementById('savepoi');
+    const { name, color, radius } = this.poiForm.value;
+    console.log('saving POI:', name, color, radius);
 
-      if (saveBTN) {
-        saveBTN.onclick = () => {
-          const { name, color, radius } = this.poiForm.value;
-
-          this.savePoiFromPopup(latPoi, lonPoi, name, color, radius);
-
-          this.map.closePopup(popup);
-          this.renderAllPois();
-        };
-      }
-    }, 0);
+    this.savePoiFromPopup(this.currentLat, this.currentLon, name, color, radius);
+    if (this.popup) {
+      this.map.closePopup(this.popup);
+    } else {
+      this.map.closePopup();
+    }
+    this.renderAllPois();
   }
 
   //edit POI popup
