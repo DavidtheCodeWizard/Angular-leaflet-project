@@ -2,7 +2,7 @@ import { AfterViewInit, Component, input, OnInit } from '@angular/core';
 import * as L from 'leaflet';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { PoiService } from '../../service/poi.service';
+import { Poi, PoiService } from '../../service/poi.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ViewChild, ElementRef } from '@angular/core'; //new
 import { NgTemplateOutlet } from '@angular/common'; //new
@@ -101,6 +101,7 @@ export class MapComponent implements AfterViewInit {
     });
   }
 
+  //render all POIs
   private renderAllPois(): void {
     this.poiLayer.clearLayers();
 
@@ -132,23 +133,46 @@ export class MapComponent implements AfterViewInit {
     this.renderAllPois();
   }
 
-  //show POI popup -> refactor openNewPoiPopup
-  private showPoiPopup(latPoi: number, lonPoi: number): void {
-    this.currentLat = latPoi;
-    this.currentLon = lonPoi;
-    this.poiForm.reset({
-      name: '',
-      color: '#ff0000',
-      radius: 10,
-    });
+  private showPoiPopup(latPoi: number | undefined, lonPoi: number | undefined, poi?: Poi): void {
+    if (latPoi !== undefined && lonPoi !== undefined && !isNaN(latPoi) && !isNaN(lonPoi)) {
+      this.currentLat = latPoi;
+      this.currentLon = lonPoi;
+      this.poiForm.reset({
+        name: '',
+        color: '#ff0000',
+        radius: 10,
+      });
 
-    const popupContent = this.poiFormContainer.nativeElement; //new
-    console.log(popupContent);
-    if (popupContent.parentElement) {
-      popupContent.parentElement.removeChild(popupContent);
+      const popupContent = this.poiFormContainer.nativeElement; //reuse in seperate function in refactor.
+      console.log(popupContent);
+      if (popupContent.parentElement) {
+        popupContent.parentElement.removeChild(popupContent);
+      }
+      this.popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupContent).openOn(this.map);
+    } else if (poi && typeof poi === 'object') {
+      //else if read object poi and set information in poiForm
+      //add const
+      this.currentLat = poi.latPoi;
+      this.currentLon = poi.lonPoi;
+      this.poiForm.reset({
+        name: poi.name,
+        color: poi.color,
+        radius: poi.radius,
+      });
+      const popupContent = this.poiFormContainer.nativeElement; //reuse in seperate function in refactor.
+      console.log(popupContent);
+      if (popupContent.parentElement) {
+        popupContent.parentElement.removeChild(popupContent);
+      }
+      this.popup = L.popup()
+        .setLatLng([this.currentLat, this.currentLon])
+        .setContent(popupContent)
+        .openOn(this.map);
+    } else {
+      console.error('geen geldige input ontvangen');
+      //else return with error
     }
-    this.popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupContent).openOn(this.map);
-    //const popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupContent).openOn(this.map);
+    //this.popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupContent).openOn(this.map);
   }
 
   public savePoi(): void {
@@ -159,6 +183,7 @@ export class MapComponent implements AfterViewInit {
 
     this.savePoiFromPopup(this.currentLat, this.currentLon, name, color, radius);
     if (this.popup) {
+      //check what the effect of this if statement is.
       this.map.closePopup(this.popup);
     } else {
       this.map.closePopup();
@@ -167,15 +192,8 @@ export class MapComponent implements AfterViewInit {
   }
 
   //edit POI popup
-  private showEditPoiPopup(poi: any): void {
-    //get html content and set values
-    //show popup
-    //timeout
-    //save button with all fields
-    //delete old record?
-    //add new record? is update posible?
-    //close popup
-    //rendeAllPois
+  private showEditPoiPopup(poi: Poi): void {
+    this.showPoiPopup(undefined, undefined, poi); //check in refactor
   }
 
   /*private getHTMLContent(poi: any) : string {
