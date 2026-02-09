@@ -24,7 +24,7 @@ export class MapComponent implements AfterViewInit {
   isAddingPoi: boolean = false;
   currentLat!: number;
   currentLon!: number;
-  private popup!: L.Popup; //popup property
+  private popup!: L.Popup;
 
   //map init
   private initMap(): void {
@@ -150,8 +150,6 @@ export class MapComponent implements AfterViewInit {
       }
       this.popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupContent).openOn(this.map);
     } else if (poi && typeof poi === 'object') {
-      //else if read object poi and set information in poiForm
-      //add const
       this.currentLat = poi.latPoi;
       this.currentLon = poi.lonPoi;
       this.poiForm.reset({
@@ -170,9 +168,7 @@ export class MapComponent implements AfterViewInit {
         .openOn(this.map);
     } else {
       console.error('geen geldige input ontvangen');
-      //else return with error
     }
-    //this.popup = L.popup().setLatLng([latPoi, lonPoi]).setContent(popupContent).openOn(this.map);
   }
 
   public savePoi(): void {
@@ -193,11 +189,6 @@ export class MapComponent implements AfterViewInit {
 
   //edit POI popup
   private showEditPoiPopup(poi: Poi): void {
-    this.showPoiPopup(undefined, undefined, poi); //check in refactor
+    this.showPoiPopup(undefined, undefined, poi); //check in refactor if anything else is needed here
   }
-
-  /*private getHTMLContent(poi: any) : string {
-   //const template = document.getElementById('poi-form-template');
-  // return = const popupcontent = template?.innerHTML || '';
-  }  */
 }
