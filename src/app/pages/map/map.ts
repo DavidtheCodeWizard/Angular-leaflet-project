@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, input, OnInit } from '@angular/core';
 import * as L from 'leaflet';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Poi, PoiService } from '../../service/poi.service';
+import { GeocodingService } from '../../service/geocoding.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ViewChild, ElementRef } from '@angular/core'; //new
 import { NgTemplateOutlet } from '@angular/common'; //new
@@ -54,9 +54,9 @@ export class MapComponent implements AfterViewInit {
   }
 
   constructor(
-    private http: HttpClient,
     public poiService: PoiService,
     private fb: FormBuilder,
+    private geocodingService: GeocodingService,
   ) {}
 
   ngOnInit(): void {
@@ -77,30 +77,22 @@ export class MapComponent implements AfterViewInit {
   }
 
   onSearch(): void {
-    console.log('Search query:', this.searchQuery);
     if (!this.searchQuery) {
       alert('Voer een locatie in!');
       return;
     }
-    //search API
-    const url = `https://nominatim.openstreetmap.org/search?q=${this.searchQuery}&format=json&limit=1`;
-    console.log('API URL:', url);
 
-    this.http.get(url).subscribe({
-      next: (Response: any) => {
-        console.log('API Response:', Response);
-        const location = Response[0];
-        const lat = location.lat;
-        const lon = location.lon;
-        console.log(lat, lon); // 51.8296133 4.9738743
-        this.map.setView([lat, lon], 13);
+    this.geocodingService.searchLocation(this.searchQuery).subscribe({
+      next: (result) => {
+        console.log('search result:', result);
+        this.map.setView([result.lat, result.lon], 13);
       },
       error: (error) => {
-        console.error('error', error);
+        console.error('Geocoding error:', error);
+        alert('Locatie niet gevonden of API fout.');
       },
     });
   }
-
   //render all POIs
   private renderAllPois(): void {
     this.poiLayer.clearLayers();
